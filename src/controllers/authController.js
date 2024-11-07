@@ -1,12 +1,19 @@
 const User = require('../models/userModel');
 const { generateAccessToken, generateRefreshToken } = require('../utils/tokenUtils');
 
+// register
 const signup = async (req, res) => {
   try {
-    const { username, password } = req.body;
-    const user = new User({ username, password });
+    console.log("signup route hit")
+    const { username, password,email } = req.body;
+    const user = new User({ username, password ,email });
+
+    const accessToken = generateAccessToken(user._id);
+    const refreshToken = generateRefreshToken(user._id);
+    user.refreshToken = refreshToken;
+    // await user.save();
     await user.save();
-    res.status(201).json({ message: 'User created successfully' });
+    res.status(201).json({ message: 'User created successfully',refreshToken,accessToken });
   } catch (error) {
     res.status(400).json({ message: 'Signup failed', error: error.message });
   }
@@ -48,4 +55,30 @@ const refreshToken = async (req, res) => {
   }
 };
 
-module.exports = { signup, login, refreshToken };
+// Controller to get the logged-in user's profile
+const getUserProfile = async (req, res) => {
+  try {
+    // The user ID is attached to the request object by the authenticateUser middleware
+    const user = await User.findById(req.userId).select('-password'); // Exclude password field
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.status(200).json(user);
+  } catch (error) {
+    res.status(500).json({ message: 'Error retrieving user profile', error: error.message });
+  }
+};
+
+// Controller to get all users
+const getAllUsers = async (req, res) => {
+  try {
+    const users = await User.find().select('-password'); // Exclude password from response
+    res.status(200).json(users);
+  } catch (error) {
+    res.status(500).json({ message: 'Error retrieving users', error: error.message });
+  }
+};
+
+module.exports = { signup, login, refreshToken ,getUserProfile,getAllUsers};
