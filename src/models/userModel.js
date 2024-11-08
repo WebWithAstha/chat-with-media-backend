@@ -6,6 +6,7 @@ const userSchema = new mongoose.Schema({
   password: { type: String, required: true },
   email: { type: String, required: true},
   refreshToken: { type: String },  // Store refresh tokens for session handling
+  socketId: {type:String}, // Socket Id
 });
 
 userSchema.pre('save', async function (next) {

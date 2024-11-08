@@ -74,7 +74,8 @@ const getUserProfile = async (req, res) => {
 // Controller to get all users
 const getAllUsers = async (req, res) => {
   try {
-    const users = await User.find().select('-password'); // Exclude password from response
+    const loggedInUserId = req.userId; // Assuming req.user contains the authenticated user's info
+    const users = await User.find({ _id: { $ne: loggedInUserId } }).select('-password'); // Exclude password from response
     res.status(200).json(users);
   } catch (error) {
     res.status(500).json({ message: 'Error retrieving users', error: error.message });
