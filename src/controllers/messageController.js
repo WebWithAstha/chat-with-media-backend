@@ -1,27 +1,25 @@
 const Message = require('../models/messageModel');
 const User = require('../models/userModel');
 
+// Get chat messages between the logged-in user and another user
 const getChatBetweenUsers = async (req, res) => {
   try {
-    const userId = req.userId; // Extract userId from the authenticated request
-    const { otherUserId } = req.params; // Get the other user's ID from the URL parameter
+    const userId = req.userId;
+    const { otherUserId } = req.params;
 
-    // Ensure the other user exists
+    // Check if other user exists
     const otherUser = await User.findById(otherUserId);
-    if (!otherUser) {
-      return res.status(404).json({ message: 'User not found' });
-    }
+    if (!otherUser) return res.status(404).json({ message: 'User not found' });
 
-    // Get the chat between the logged-in user and the other user
+    // Fetch and return chat messages
     const chatMessages = await Message.find({
       $or: [
-        { sender: userId, sentTo: { $in: [otherUserId] } },
-        { sender: otherUserId, sentTo: { $in: [userId] } },
+        { sender: userId, sentTo: otherUserId },
+        { sender: otherUserId, sentTo: userId },
       ],
-      'media.isDeleted': { $ne: true }, // Exclude deleted media
     })
-    .populate('sender sentTo', 'username profilePicture') // Populate user info like username and profile picture
-    .sort({ createdAt: 1 }); // Sort by the oldest message first
+      .populate('sender sentTo', 'username profilePicture')
+      .sort({ createdAt: 1 });
 
     res.status(200).json({ chatMessages });
   } catch (error) {
@@ -29,11 +27,5 @@ const getChatBetweenUsers = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
-
-
-
-
-
-
 
 module.exports = { getChatBetweenUsers };
